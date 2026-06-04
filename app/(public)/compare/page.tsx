@@ -34,7 +34,7 @@ type CompanyRow = {
   tagline: string | null;
   ratingAverage: number;
   reviewCount: number;
-  tier: string;
+  tier: "FREE" | "BASIC" | "PREMIUM" | "FEATURED";
   isFeatured: boolean;
   isVerified: boolean;
   yearFounded: number | null;
@@ -109,38 +109,37 @@ export default async function ComparePage({
     );
   }
 
-  const companies: CompanyRow[] = await prisma.company
-    .findMany({
-      where: { slug: { in: slugs } },
-      select: {
-        id: true,
-        slug: true,
-        name: true,
-        tagline: true,
-        ratingAverage: true,
-        reviewCount: true,
-        tier: true,
-        isFeatured: true,
-        isVerified: true,
-        yearFounded: true,
-        employeeCount: true,
-        phone: true,
-        website: true,
-        city: { select: { name: true } },
-        state: { select: { name: true, abbreviation: true } },
-        services: {
-          select: {
-            category: { select: { name: true, slug: true } },
-          },
+  const rawRows = await prisma.company.findMany({
+    where: { slug: { in: slugs } },
+    select: {
+      id: true,
+      slug: true,
+      name: true,
+      tagline: true,
+      ratingAverage: true,
+      reviewCount: true,
+      tier: true,
+      isFeatured: true,
+      isVerified: true,
+      yearFounded: true,
+      employeeCount: true,
+      phone: true,
+      website: true,
+      city: { select: { name: true } },
+      state: { select: { name: true, abbreviation: true } },
+      services: {
+        select: {
+          category: { select: { name: true, slug: true } },
         },
       },
-    })
-    .then((rows) =>
-      // Preserve slug order from query params
-      slugs
-        .map((slug) => rows.find((r) => r.slug === slug))
-        .filter((r): r is CompanyRow => Boolean(r))
-    );
+    },
+  });
+
+  // Preserve slug order from query params
+  const companies: CompanyRow[] = slugs
+    .map((slug) => rawRows.find((r) => r.slug === slug))
+    .filter((r): r is (typeof rawRows)[number] => r !== undefined)
+    .map((r) => ({ ...r, tier: r.tier as CompanyRow["tier"] }));
 
   if (companies.length === 0) {
     return (
