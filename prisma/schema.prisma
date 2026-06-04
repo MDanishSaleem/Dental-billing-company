@@ -1,0 +1,482 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+enum Role {
+  ADMIN
+  COMPANY_OWNER
+  USER
+}
+
+enum CompanyStatus {
+  PENDING
+  ACTIVE
+  SUSPENDED
+  REJECTED
+}
+
+enum ListingTier {
+  FREE
+  BASIC
+  PREMIUM
+  FEATURED
+}
+
+enum ReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  CONVERTED
+  ARCHIVED
+}
+
+enum ClaimStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+enum PaymentProvider {
+  STRIPE
+  PAYPAL
+  PAYONEER
+  MANUAL
+}
+
+enum PostStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+model State {
+  id           Int       @id @default(autoincrement())
+  name         String    @db.VarChar(100)
+  slug         String    @unique @db.VarChar(100)
+  abbreviation String    @unique @db.Char(2)
+  isActive     Boolean   @default(true)
+  sortOrder    Int       @default(0)
+  cities       City[]
+  companies    Company[]
+  createdAt    DateTime  @default(now())
+
+  @@index([slug])
+  @@map("states")
+}
+
+model City {
+  id         Int       @id @default(autoincrement())
+  name       String    @db.VarChar(100)
+  slug       String    @db.VarChar(100)
+  stateId    Int
+  state      State     @relation(fields: [stateId], references: [id])
+  latitude   Float?
+  longitude  Float?
+  population Int?
+  isActive   Boolean   @default(true)
+  companies  Company[]
+  createdAt  DateTime  @default(now())
+
+  @@unique([slug, stateId])
+  @@index([stateId])
+  @@index([slug])
+  @@map("cities")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique @db.VarChar(255)
+  emailVerified DateTime?
+  password      String?   @db.VarChar(255)
+  name          String?   @db.VarChar(200)
+  avatar        String?   @db.VarChar(500)
+  role          Role      @default(USER)
+  isBanned      Boolean   @default(false)
+  bannedReason  String?   @db.Text
+  phone         String?   @db.VarChar(30)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts     Account[]
+  sessions     Session[]
+  companies    Company[]            @relation("CompanyOwner")
+  reviews      Review[]
+  leads        Lead[]
+  claims       CompanyOwnerClaim[]
+  transactions PaymentTransaction[]
+
+  @@index([email])
+  @@index([role])
+  @@map("users")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+model ServiceCategory {
+  id          Int              @id @default(autoincrement())
+  name        String           @unique @db.VarChar(150)
+  slug        String           @unique @db.VarChar(150)
+  description String?          @db.Text
+  icon        String?          @db.VarChar(100)
+  color       String?          @db.VarChar(20)
+  sortOrder   Int              @default(0)
+  isActive    Boolean          @default(true)
+  createdAt   DateTime         @default(now())
+  companies   CompanyService[]
+
+  @@index([slug])
+  @@map("service_categories")
+}
+
+model Company {
+  id            String        @id @default(cuid())
+  slug          String        @unique @db.VarChar(255)
+  name          String        @db.VarChar(255)
+  tagline       String?       @db.VarChar(300)
+  description   String?       @db.Text
+  status        CompanyStatus @default(PENDING)
+  tier          ListingTier   @default(FREE)
+  isFeatured    Boolean       @default(false)
+  isVerified    Boolean       @default(false)
+  isClaimed     Boolean       @default(false)
+
+  email         String?       @db.VarChar(255)
+  phone         String?       @db.VarChar(30)
+  website       String?       @db.VarChar(500)
+  contactName   String?       @db.VarChar(200)
+
+  address       String?       @db.VarChar(500)
+  cityId        Int?
+  city          City?         @relation(fields: [cityId], references: [id])
+  stateId       Int?
+  state         State?        @relation(fields: [stateId], references: [id])
+  zipCode       String?       @db.VarChar(10)
+  latitude      Float?
+  longitude     Float?
+
+  logo          String?       @db.VarChar(500)
+  coverImage    String?       @db.VarChar(500)
+
+  ratingAverage Float         @default(0) @db.Float
+  reviewCount   Int           @default(0)
+  viewCount     Int           @default(0)
+  leadCount     Int           @default(0)
+
+  linkedIn      String?       @db.VarChar(500)
+  twitter       String?       @db.VarChar(500)
+  facebook      String?       @db.VarChar(500)
+
+  metaTitle       String?     @db.VarChar(160)
+  metaDescription String?     @db.VarChar(320)
+
+  yearFounded   Int?
+  employeeCount String?       @db.VarChar(50)
+  serviceArea   String?       @db.Text
+
+  featuredUntil DateTime?
+  premiumUntil  DateTime?
+
+  ownerId       String?
+  owner         User?         @relation("CompanyOwner", fields: [ownerId], references: [id])
+
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  services     CompanyService[]
+  reviews      Review[]
+  leads        Lead[]
+  gallery      CompanyGallery[]
+  claims       CompanyOwnerClaim[]
+  transactions PaymentTransaction[]
+
+  @@index([slug])
+  @@index([status])
+  @@index([tier])
+  @@index([isFeatured])
+  @@index([cityId])
+  @@index([stateId])
+  @@index([ratingAverage])
+  @@index([zipCode])
+  @@map("companies")
+}
+
+model CompanyService {
+  id         Int             @id @default(autoincrement())
+  companyId  String
+  company    Company         @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  categoryId Int
+  category   ServiceCategory @relation(fields: [categoryId], references: [id])
+
+  @@unique([companyId, categoryId])
+  @@map("company_services")
+}
+
+model CompanyGallery {
+  id        Int      @id @default(autoincrement())
+  companyId String
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  url       String   @db.VarChar(500)
+  caption   String?  @db.VarChar(255)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([companyId])
+  @@map("company_gallery")
+}
+
+model Review {
+  id            String       @id @default(cuid())
+  companyId     String
+  company       Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  userId        String?
+  user          User?        @relation(fields: [userId], references: [id])
+
+  reviewerName  String?      @db.VarChar(200)
+  reviewerEmail String?      @db.VarChar(255)
+
+  rating        Int
+  title         String?      @db.VarChar(255)
+  content       String       @db.Text
+  status        ReviewStatus @default(PENDING)
+
+  replyContent  String?      @db.Text
+  repliedAt     DateTime?
+  repliedBy     String?
+
+  isVerifiedPurchase Boolean  @default(false)
+  helpfulCount       Int      @default(0)
+  reportCount        Int      @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([companyId, status])
+  @@index([userId])
+  @@index([status])
+  @@map("reviews")
+}
+
+model Lead {
+  id           String     @id @default(cuid())
+  companyId    String
+  company      Company    @relation(fields: [companyId], references: [id])
+  userId       String?
+  user         User?      @relation(fields: [userId], references: [id])
+
+  name         String     @db.VarChar(200)
+  email        String     @db.VarChar(255)
+  phone        String?    @db.VarChar(30)
+  practiceName String?    @db.VarChar(255)
+  message      String     @db.Text
+  serviceType  String?    @db.VarChar(150)
+  status       LeadStatus @default(NEW)
+
+  ipAddress    String?    @db.VarChar(45)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@index([companyId])
+  @@index([status])
+  @@map("leads")
+}
+
+model Plan {
+  id               Int       @id @default(autoincrement())
+  name             String    @unique @db.VarChar(100)
+  slug             String    @unique @db.VarChar(100)
+  tier             ListingTier
+  price            Decimal   @db.Decimal(10, 2)
+  billingCycle     String    @db.VarChar(20)
+  features         Json
+  maxGalleryImages Int       @default(0)
+  maxServices      Int       @default(5)
+  isPopular        Boolean   @default(false)
+  isActive         Boolean   @default(true)
+  stripePriceId    String?   @db.VarChar(255)
+  paypalPlanId     String?   @db.VarChar(255)
+  sortOrder        Int       @default(0)
+  createdAt        DateTime  @default(now())
+  transactions     PaymentTransaction[]
+
+  @@map("plans")
+}
+
+model PaymentTransaction {
+  id            String          @id @default(cuid())
+  userId        String
+  user          User            @relation(fields: [userId], references: [id])
+  companyId     String?
+  company       Company?        @relation(fields: [companyId], references: [id])
+  planId        Int?
+  plan          Plan?           @relation(fields: [planId], references: [id])
+
+  provider      PaymentProvider
+  providerTxId  String?         @db.VarChar(255)
+  amount        Decimal         @db.Decimal(10, 2)
+  currency      String          @default("USD") @db.Char(3)
+  status        PaymentStatus   @default(PENDING)
+  notes         String?         @db.Text
+
+  periodStart   DateTime?
+  periodEnd     DateTime?
+
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  @@index([userId])
+  @@index([companyId])
+  @@index([status])
+  @@map("payment_transactions")
+}
+
+model CompanyOwnerClaim {
+  id          String      @id @default(cuid())
+  companyId   String
+  company     Company     @relation(fields: [companyId], references: [id])
+  userId      String
+  user        User        @relation(fields: [userId], references: [id])
+  status      ClaimStatus @default(PENDING)
+  evidence    String?     @db.Text
+  adminNotes  String?     @db.Text
+  reviewedBy  String?
+  reviewedAt  DateTime?
+  createdAt   DateTime    @default(now())
+
+  @@unique([companyId, userId])
+  @@index([status])
+  @@map("company_owner_claims")
+}
+
+model BlogCategory {
+  id    Int        @id @default(autoincrement())
+  name  String     @unique @db.VarChar(150)
+  slug  String     @unique @db.VarChar(150)
+  posts BlogPost[]
+
+  @@map("blog_categories")
+}
+
+model BlogPost {
+  id              String        @id @default(cuid())
+  title           String        @db.VarChar(255)
+  slug            String        @unique @db.VarChar(255)
+  excerpt         String?       @db.Text
+  content         String        @db.LongText
+  coverImage      String?       @db.VarChar(500)
+  status          PostStatus    @default(DRAFT)
+  categoryId      Int?
+  category        BlogCategory? @relation(fields: [categoryId], references: [id])
+  authorId        String?
+  tags            String?       @db.Text
+  viewCount       Int           @default(0)
+  metaTitle       String?       @db.VarChar(160)
+  metaDescription String?       @db.VarChar(320)
+  focusKeyword    String?       @db.VarChar(150)
+  publishedAt     DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@index([slug])
+  @@index([status])
+  @@map("blog_posts")
+}
+
+model Page {
+  id              String     @id @default(cuid())
+  title           String     @db.VarChar(255)
+  slug            String     @unique @db.VarChar(255)
+  content         String     @db.LongText
+  status          PostStatus @default(DRAFT)
+  template        String?    @db.VarChar(100)
+  coverImage      String?    @db.VarChar(500)
+  metaTitle       String?    @db.VarChar(160)
+  metaDescription String?    @db.VarChar(320)
+  sortOrder       Int        @default(0)
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  @@index([slug])
+  @@map("pages")
+}
+
+model Media {
+  id           String   @id @default(cuid())
+  filename     String   @db.VarChar(255)
+  originalName String   @db.VarChar(255)
+  mimeType     String   @db.VarChar(100)
+  size         Int
+  url          String   @db.VarChar(500)
+  width        Int?
+  height       Int?
+  alt          String?  @db.VarChar(255)
+  folder       String?  @db.VarChar(100)
+  uploadedBy   String?
+  createdAt    DateTime @default(now())
+
+  @@index([folder])
+  @@map("media")
+}
+
+model Setting {
+  key       String   @id @db.VarChar(100)
+  value     String   @db.LongText
+  type      String   @default("string") @db.VarChar(20)
+  group     String   @default("general") @db.VarChar(50)
+  label     String?  @db.VarChar(200)
+  updatedAt DateTime @updatedAt
+
+  @@index([group])
+  @@map("settings")
+}
