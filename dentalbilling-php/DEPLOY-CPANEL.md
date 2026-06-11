@@ -45,7 +45,17 @@ Open your domain. The homepage should load with the seeded companies. 🎉
 
 **Admin login:** `https://yourdomain/admin`
 Email `admin@dentalbillingcompany.us` · Password `admin123!`
-*(Change the password after first login. The admin panel arrives in a later build phase.)*
+*(Change the password after first login, from Admin → Users, or by registering a new admin.)*
+
+### What's included
+- **Public:** homepage, search with filters, directory by state, city listings,
+  company profiles (with contact + review forms), compare, pricing, blog, CMS pages.
+- **Company owners:** register/login, dashboard, edit profile & services, view
+  leads & reviews, manage subscription (manual payment submission).
+- **Admin panel** (`/admin`): dashboard, companies CRUD + approve/feature,
+  categories, states, plans, review moderation, leads, payments, blog, pages,
+  users (roles & bans), settings.
+- **SEO:** server-rendered HTML, `/sitemap.xml`, `/robots.txt`.
 
 ---
 
@@ -60,5 +70,6 @@ PHP picks up changes immediately.
   see the error, then set it back to `production`.
 - **Links/styles look off** → make sure `site.url` in `config.php` exactly matches your
   domain (with `https://`).
-- **Homepage works but `/pricing` etc. 404** → those pages are added in later build
-  phases; only the homepage is live in Phase 1.
+- **Inner pages 404 (homepage works)** → mod_rewrite isn't applying `.htaccess`.
+  Confirm `.htaccess` uploaded (enable "Show Hidden Files") and that the host allows
+  `AllowOverride`. On LiteSpeed/Apache cPanel this works out of the box.

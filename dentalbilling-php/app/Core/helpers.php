@@ -74,6 +74,26 @@ function compact_number($n): string
     return (string) $n;
 }
 
+/** Render a view fragment (no layout) and return its HTML. */
+function partial(string $view, array $data = []): string
+{
+    return App\Core\View::renderToString($view, $data, '');
+}
+
+/** Convert a string to a URL-safe slug. */
+function slugify(string $text): string
+{
+    $text = strtolower(trim($text));
+    $text = preg_replace('/[^a-z0-9]+/', '-', $text);
+    return trim((string) $text, '-') ?: 'item';
+}
+
+/** Current request path (no query string). */
+function current_path(): string
+{
+    return parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
+}
+
 /** Truncate text to a length with an ellipsis. Works with or without mbstring. */
 function excerpt(?string $text, int $length = 120): string
 {
