@@ -1,0 +1,32 @@
+# Front controller — route all non-file requests through index.php
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # If the request maps to a real file or directory, serve it directly
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+
+    # Otherwise send everything to index.php
+    RewriteRule ^ index.php [QSA,L]
+</IfModule>
+
+# Protect sensitive files from direct web access
+<FilesMatch "^(config\.php|database\.sql|composer\.(json|lock))$">
+    Require all denied
+</FilesMatch>
+
+# Sensible defaults
+Options -Indexes
+DirectoryIndex index.php
+
+# Basic caching for static assets
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType text/css "access plus 7 days"
+    ExpiresByType application/javascript "access plus 7 days"
+    ExpiresByType image/webp "access plus 30 days"
+    ExpiresByType image/jpeg "access plus 30 days"
+    ExpiresByType image/png "access plus 30 days"
+    ExpiresByType image/svg+xml "access plus 30 days"
+</IfModule>
