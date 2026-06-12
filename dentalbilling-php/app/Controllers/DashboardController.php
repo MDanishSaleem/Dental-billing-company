@@ -109,4 +109,66 @@ final class DashboardController extends Controller
             'active'  => 'subscription',
         ], 'dashboard');
     }
+
+    /** Show the "list your company" form (owners with no company yet). */
+    public function createCompany(): void
+    {
+        if (Company::forOwner((int) Auth::id())) {
+            $this->redirect('/dashboard/profile');
+        }
+        $this->view('dashboard/company-new', [
+            'title'      => 'List your company',
+            'categories' => ServiceCategory::all(),
+            'states'     => State::all(),
+            'cities'     => City::all(),
+            'active'     => 'home',
+        ], 'dashboard');
+    }
+
+    /** Create a company owned by the current user (pending admin approval). */
+    public function storeCompany(): void
+    {
+        if (!Auth::checkCsrf($this->input('_csrf'))) {
+            flash('error', 'Session expired.'); $this->redirect('/dashboard/company/new');
+        }
+        if (Company::forOwner((int) Auth::id())) {
+            $this->redirect('/dashboard/profile');
+        }
+
+        $name     = trim((string) $this->input('name'));
+        $stateId  = (int) $this->input('state_id');
+        $cityId   = (int) $this->input('city_id');
+        if ($name === '' || !$stateId || !$cityId) {
+            flash('error', 'Company name, state and city are required.');
+            $this->redirect('/dashboard/company/new');
+        }
+
+        // Build a unique slug
+        $slug = slugify($name);
+        if (Company::findBySlug($slug)) {
+            $slug .= '-' . substr(bin2hex(random_bytes(3)), 0, 5);
+        }
+
+        $id = Company::create([
+            'owner_id'          => Auth::id(),
+            'name'              => $name,
+            'slug'              => $slug,
+            'status'            => 'PENDING',
+            'tier'              => 'FREE',
+            'short_description' => trim((string) $this->input('short_description')),
+            'description'       => trim((string) $this->input('description')),
+            'website'           => trim((string) $this->input('website')),
+            'phone'             => trim((string) $this->input('phone')),
+            'email'             => trim((string) $this->input('email')),
+            'address'           => trim((string) $this->input('address')),
+            'founded_year'      => (int) $this->input('founded_year'),
+            'team_size'         => trim((string) $this->input('team_size')),
+            'city_id'           => $cityId,
+            'state_id'          => $stateId,
+        ]);
+        Company::syncServices($id, (array) ($_POST['services'] ?? []));
+
+        flash('success', 'Your listing was submitted! It will go live once an admin approves it.');
+        $this->redirect('/dashboard');
+    }
 }

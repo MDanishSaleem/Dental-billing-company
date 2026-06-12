@@ -1,4 +1,4 @@
-<?php /** @var array $plans */ ?>
+<?php /** @var array $plans @var array $features */ ?>
 <section class="page-head center">
     <div class="container">
         <h1>List your dental billing company</h1>
@@ -16,8 +16,8 @@
                         $<?= e(number_format((float) $plan['price'])) ?><span>/mo</span>
                     </div>
                     <ul class="plan__features">
-                        <?php foreach (array_filter(explode('|', (string) $plan['features'])) as $feat): ?>
-                            <li>✓ <?= e(trim($feat)) ?></li>
+                        <?php foreach (($features[(int) $plan['id']] ?? []) as $feat): ?>
+                            <li>✓ <?= e($feat) ?></li>
                         <?php endforeach; ?>
                     </ul>
                     <a href="<?= url('/auth/register?plan=' . e($plan['slug'])) ?>"

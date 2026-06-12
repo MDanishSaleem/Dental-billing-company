@@ -4,11 +4,17 @@
 
 <?php if (!$company): ?>
     <div class="card">
-        <h2>No company linked yet</h2>
-        <p class="muted">Your account isn’t linked to a listing yet. An admin can assign one, or you can claim an existing listing from its profile page.</p>
-        <a href="<?= url('/search') ?>" class="btn btn--primary">Browse listings</a>
+        <h2>List your company</h2>
+        <p class="muted">You don’t have a listing yet. Add your dental billing company to appear in the directory — it goes live once an admin approves it.</p>
+        <a href="<?= url('/dashboard/company/new') ?>" class="btn btn--primary">+ List your company</a>
+        <a href="<?= url('/search') ?>" class="btn btn--ghost">Browse listings</a>
     </div>
 <?php else: ?>
+    <?php if ($company['status'] === 'PENDING'): ?>
+        <div class="alert alert--success" style="background:#fffbeb;color:#b45309;border-color:#fde68a">
+            Your listing <strong><?= e($company['name']) ?></strong> is awaiting admin approval. You can keep editing it in the meantime.
+        </div>
+    <?php endif; ?>
     <div class="stat-cards">
         <div class="stat-card"><strong><?= e($leadCount) ?></strong><span>Total leads</span></div>
         <div class="stat-card"><strong><?= e($reviewCount) ?></strong><span>Reviews</span></div>
