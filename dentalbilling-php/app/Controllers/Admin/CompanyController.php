@@ -29,6 +29,7 @@ final class CompanyController extends AdminController
             'categories' => ServiceCategory::all(),
             'states'     => State::all(),
             'cities'     => City::all(),
+            'nofollowSupported' => Company::nofollowSupported(),
         ]);
     }
 
@@ -40,6 +41,7 @@ final class CompanyController extends AdminController
         $data['slug'] = slugify($data['name']);
         $id = Company::create($data);
         Company::syncServices($id, (array) ($_POST['services'] ?? []));
+        Company::setWebsiteNofollow($id, (int) $this->input('website_nofollow', 1));
         flash('success', 'Company created.');
         $this->redirect('/admin/companies');
     }
@@ -56,6 +58,7 @@ final class CompanyController extends AdminController
             'categories' => ServiceCategory::all(),
             'states'     => State::all(),
             'cities'     => City::all(),
+            'nofollowSupported' => Company::nofollowSupported(),
         ]);
     }
 
@@ -69,6 +72,7 @@ final class CompanyController extends AdminController
         $data['slug'] = $existing['slug'];
         Company::update($id, $data);
         Company::syncServices($id, (array) ($_POST['services'] ?? []));
+        Company::setWebsiteNofollow($id, (int) $this->input('website_nofollow', 1));
         flash('success', 'Company updated.');
         $this->redirect('/admin/companies/' . $id);
     }

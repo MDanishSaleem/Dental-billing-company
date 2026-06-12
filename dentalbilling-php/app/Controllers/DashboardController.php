@@ -5,7 +5,9 @@ namespace App\Controllers;
 
 use App\Core\Controller;
 use App\Core\Auth;
+use App\Core\Upload;
 use App\Models\Company;
+use App\Models\CompanyGallery;
 use App\Models\Lead;
 use App\Models\Review;
 use App\Models\ServiceCategory;
@@ -74,8 +76,83 @@ final class DashboardController extends Controller
         ]);
         Company::syncServices((int) $company['id'], (array) ($_POST['services'] ?? []));
 
+        // Logo upload — only if the owner's plan grants it.
+        if (cap($company, 'logo_upload')) {
+            $logo = Upload::image('logo');
+            if ($logo !== null) {
+                Company::updateLogo((int) $company['id'], $logo);
+            }
+        }
+
         flash('success', 'Profile updated.');
         $this->redirect('/dashboard/profile');
+    }
+
+    /** Photo gallery (gated by the 'gallery' capability). */
+    public function gallery(): void
+    {
+        $company = Company::forOwner((int) Auth::id());
+        if (!$company || !cap($company, 'gallery')) {
+            flash('error', 'Your plan doesn’t include a photo gallery.');
+            $this->redirect('/dashboard');
+        }
+        $this->view('dashboard/gallery', [
+            'title'   => 'Photo gallery',
+            'company' => $company,
+            'images'  => CompanyGallery::forCompany((int) $company['id']),
+            'active'  => 'gallery',
+        ], 'dashboard');
+    }
+
+    public function uploadGallery(): void
+    {
+        if (!Auth::checkCsrf($this->input('_csrf'))) {
+            flash('error', 'Session expired.'); $this->redirect('/dashboard/gallery');
+        }
+        $company = Company::forOwner((int) Auth::id());
+        if (!$company || !cap($company, 'gallery')) {
+            $this->redirect('/dashboard');
+        }
+        $path = Upload::image('photo');
+        if ($path !== null) {
+            CompanyGallery::add((int) $company['id'], $path);
+            flash('success', 'Photo added.');
+        } else {
+            flash('error', 'Please choose a valid image (JPG/PNG/WebP/GIF, max 3 MB).');
+        }
+        $this->redirect('/dashboard/gallery');
+    }
+
+    public function deleteGalleryImage(array $args): void
+    {
+        if (!Auth::checkCsrf($this->input('_csrf'))) {
+            flash('error', 'Session expired.'); $this->redirect('/dashboard/gallery');
+        }
+        $company = Company::forOwner((int) Auth::id());
+        $img = CompanyGallery::find((int) $args['id']);
+        if ($company && $img && (int) $img['company_id'] === (int) $company['id']) {
+            @unlink(BASE_PATH . '/' . $img['image']);
+            CompanyGallery::delete((int) $img['id']);
+            flash('success', 'Photo removed.');
+        }
+        $this->redirect('/dashboard/gallery');
+    }
+
+    /** Analytics (gated by the 'analytics' capability). */
+    public function analytics(): void
+    {
+        $company = Company::forOwner((int) Auth::id());
+        if (!$company || !cap($company, 'analytics')) {
+            flash('error', 'Your plan doesn’t include analytics.');
+            $this->redirect('/dashboard');
+        }
+        $this->view('dashboard/analytics', [
+            'title'   => 'Analytics',
+            'company' => $company,
+            'leads'   => Lead::forCompany((int) $company['id']),
+            'reviews' => Review::forCompanyOwner((int) $company['id']),
+            'active'  => 'analytics',
+        ], 'dashboard');
     }
 
     public function leads(): void

@@ -38,8 +38,12 @@ $router->get('/dashboard/company/new', 'DashboardController@createCompany');
 $router->post('/dashboard/company/new', 'DashboardController@storeCompany');
 $router->get('/dashboard/profile', 'DashboardController@profile');
 $router->post('/dashboard/profile', 'DashboardController@saveProfile');
+$router->get('/dashboard/gallery', 'DashboardController@gallery');
+$router->post('/dashboard/gallery', 'DashboardController@uploadGallery');
+$router->post('/dashboard/gallery/{id}/delete', 'DashboardController@deleteGalleryImage');
 $router->get('/dashboard/leads', 'DashboardController@leads');
 $router->get('/dashboard/reviews', 'DashboardController@reviews');
+$router->get('/dashboard/analytics', 'DashboardController@analytics');
 $router->get('/dashboard/subscription', 'DashboardController@subscription');
 
 // ---- Admin ----
@@ -63,9 +67,7 @@ $router->get('/admin/leads', 'Admin\\LeadController@index');
 $router->post('/admin/leads/{id}/status', 'Admin\\LeadController@status');
 $router->get('/admin/plans', 'Admin\\PlanController@index');
 $router->post('/admin/plans/{id}', 'Admin\\PlanController@update');
-$router->post('/admin/plans/{id}/features', 'Admin\\PlanController@addFeature');
-$router->post('/admin/plan-features/{id}/toggle', 'Admin\\PlanController@toggleFeature');
-$router->post('/admin/plan-features/{id}/delete', 'Admin\\PlanController@removeFeature');
+$router->post('/admin/plans/{id}/capability', 'Admin\\PlanController@toggleCapability');
 $router->get('/admin/blog', 'Admin\\BlogController@index');
 $router->get('/admin/blog/new', 'Admin\\BlogController@create');
 $router->post('/admin/blog', 'Admin\\BlogController@store');

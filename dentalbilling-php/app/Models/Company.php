@@ -196,4 +196,30 @@ final class Company
             "SELECT " . self::SELECT . " " . self::JOINS . " WHERE c.owner_id=? LIMIT 1", [$ownerId]
         );
     }
+
+    public static function updateLogo(int $id, string $path): void
+    {
+        Database::execute("UPDATE companies SET logo=? WHERE id=?", [$path, $id]);
+    }
+
+    /** True if the website_nofollow column exists (migration 002 applied). */
+    public static function nofollowSupported(): bool
+    {
+        static $ok = null;
+        if ($ok === null) {
+            $ok = (bool) Database::scalar(
+                "SELECT COUNT(*) FROM information_schema.columns
+                 WHERE table_schema = DATABASE() AND table_name = 'companies'
+                 AND column_name = 'website_nofollow'"
+            );
+        }
+        return $ok;
+    }
+
+    public static function setWebsiteNofollow(int $id, int $nofollow): void
+    {
+        if (self::nofollowSupported()) {
+            Database::execute("UPDATE companies SET website_nofollow=? WHERE id=?", [$nofollow ? 1 : 0, $id]);
+        }
+    }
 }

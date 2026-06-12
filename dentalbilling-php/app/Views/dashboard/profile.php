@@ -5,8 +5,26 @@
 <?php if (!$company): ?>
     <div class="card"><p class="muted">No company is linked to your account yet.</p></div>
 <?php else: ?>
-<form method="post" action="<?= url('/dashboard/profile') ?>">
+<form method="post" action="<?= url('/dashboard/profile') ?>" enctype="multipart/form-data">
     <?= csrf_field() ?>
+
+    <?php if (cap($company, 'logo_upload')): ?>
+    <div class="card">
+        <h2>Company logo</h2>
+        <div style="display:flex;align-items:center;gap:1.25rem;flex-wrap:wrap">
+            <div class="company-card__logo" style="width:64px;height:64px;font-size:1.5rem;overflow:hidden">
+                <?php if (!empty($company['logo'])): ?>
+                    <img src="<?= url($company['logo']) ?>" alt="logo" style="width:100%;height:100%;object-fit:cover">
+                <?php else: ?><?= e(strtoupper(substr($company['name'], 0, 1))) ?><?php endif; ?>
+            </div>
+            <div class="form" style="max-width:none;flex:1;min-width:220px">
+                <label>Upload a new logo (JPG/PNG/WebP, max 3 MB)</label>
+                <input type="file" name="logo" accept="image/*">
+            </div>
+        </div>
+    </div>
+    <?php endif; ?>
+
     <div class="card">
         <h2>Basics</h2>
         <div class="form" style="max-width:none">

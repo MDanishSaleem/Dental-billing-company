@@ -5,6 +5,7 @@ namespace App\Controllers;
 
 use App\Core\Controller;
 use App\Models\Company;
+use App\Models\CompanyGallery;
 use App\Models\Lead;
 use App\Models\Review;
 use App\Core\Auth;
@@ -22,6 +23,7 @@ final class CompanyController extends Controller
             'company'    => $company,
             'services'   => Company::services((int) $company['id']),
             'reviews'    => Review::approvedForCompany((int) $company['id']),
+            'gallery'    => cap($company, 'gallery') ? CompanyGallery::forCompany((int) $company['id']) : [],
             'metaDescription' => excerpt($company['description'], 155),
         ]);
     }

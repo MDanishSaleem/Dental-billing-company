@@ -1,9 +1,12 @@
 <?php /** @var array $c */ ?>
 <a href="<?= url('/companies/' . e($c['slug'])) ?>" class="company-card">
     <div class="company-card__top">
-        <div class="company-card__logo"><?= e(strtoupper(substr($c['name'], 0, 1))) ?></div>
-        <?php if (($c['tier'] ?? '') === 'FEATURED'): ?><span class="badge badge--gold">Featured</span>
-        <?php elseif (($c['tier'] ?? '') === 'PREMIUM'): ?><span class="badge badge--emerald">Premium</span><?php endif; ?>
+        <div class="company-card__logo">
+            <?php if (!empty($c['logo'])): ?>
+                <img src="<?= url($c['logo']) ?>" alt="<?= e($c['name']) ?>" style="width:100%;height:100%;object-fit:cover;border-radius:11px">
+            <?php else: ?><?= e(strtoupper(substr($c['name'], 0, 1))) ?><?php endif; ?>
+        </div>
+        <?php if (cap($c, 'featured_badge')): ?><span class="badge badge--gold">Featured</span><?php endif; ?>
     </div>
     <h3 class="company-card__name"><?= e($c['name']) ?></h3>
     <div class="company-card__loc"><?= e($c['city_name']) ?>, <?= e($c['abbreviation']) ?></div>

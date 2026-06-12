@@ -1,10 +1,14 @@
-<?php /** @var array $company @var array $services @var array $reviews */ ?>
+<?php /** @var array $company @var array $services @var array $reviews @var array $gallery */ ?>
 <section class="company-hero">
     <div class="container company-hero__inner">
-        <div class="company-hero__logo"><?= e(strtoupper(substr($company['name'], 0, 1))) ?></div>
+        <div class="company-hero__logo">
+            <?php if (!empty($company['logo'])): ?>
+                <img src="<?= url($company['logo']) ?>" alt="<?= e($company['name']) ?>" style="width:100%;height:100%;object-fit:cover;border-radius:18px">
+            <?php else: ?><?= e(strtoupper(substr($company['name'], 0, 1))) ?><?php endif; ?>
+        </div>
         <div class="company-hero__meta">
             <div class="company-hero__badges">
-                <?php if ($company['tier'] === 'FEATURED'): ?><span class="badge badge--gold">Featured</span><?php endif; ?>
+                <?php if (cap($company, 'featured_badge')): ?><span class="badge badge--gold">Featured</span><?php endif; ?>
                 <?php if ($company['tier'] === 'PREMIUM'): ?><span class="badge badge--emerald">Premium</span><?php endif; ?>
                 <span class="badge badge--emerald">Verified</span>
             </div>
@@ -39,6 +43,17 @@
                 <div class="chips">
                     <?php foreach ($services as $s): ?>
                         <span class="chip"><?= e($s['icon']) ?> <?= e($s['name']) ?></span>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+            <?php endif; ?>
+
+            <?php if (!empty($gallery)): ?>
+            <div class="card">
+                <h2>Gallery</h2>
+                <div class="grid grid--cards" style="gap:.75rem">
+                    <?php foreach ($gallery as $img): ?>
+                        <img src="<?= url($img['image']) ?>" alt="" loading="lazy" style="width:100%;height:150px;object-fit:cover;border-radius:8px">
                     <?php endforeach; ?>
                 </div>
             </div>
@@ -87,11 +102,16 @@
                 <h3>Contact <?= e($company['name']) ?></h3>
                 <ul class="contact-list">
                     <?php if ($company['phone']): ?><li>📞 <a href="tel:<?= e($company['phone']) ?>"><?= e($company['phone']) ?></a></li><?php endif; ?>
-                    <?php if ($company['website']): ?><li>🌐 <a href="<?= e($company['website']) ?>" rel="nofollow noopener" target="_blank">Visit website</a></li><?php endif; ?>
+                    <?php if ($company['website'] && cap($company, 'website_link')): ?>
+                        <li>🌐 <a href="<?= e($company['website']) ?>"
+                               rel="<?= ((int) ($company['website_nofollow'] ?? 1) === 1) ? 'nofollow noopener' : 'noopener' ?>"
+                               target="_blank">Visit website</a></li>
+                    <?php endif; ?>
                     <?php if ($company['founded_year']): ?><li>📅 Founded <?= e($company['founded_year']) ?></li><?php endif; ?>
                     <?php if ($company['team_size']): ?><li>👥 <?= e($company['team_size']) ?> employees</li><?php endif; ?>
                 </ul>
             </div>
+            <?php if (cap($company, 'lead_capture')): ?>
             <div class="card">
                 <h3>Request a quote</h3>
                 <form method="post" action="<?= url('/companies/' . e($company['slug']) . '/lead') ?>" class="form" style="max-width:none">
@@ -107,6 +127,7 @@
                     <button class="btn btn--primary" type="submit" style="margin-top:1rem;width:100%">Send message</button>
                 </form>
             </div>
+            <?php endif; ?>
         </aside>
     </div>
 </section>

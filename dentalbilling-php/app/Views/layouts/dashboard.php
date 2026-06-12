@@ -1,4 +1,5 @@
-<?php /** @var string $content @var string $title @var string $active */ ?>
+<?php /** @var string $content @var string $title @var string $active */
+$navCompany = auth() ? \App\Models\Company::forOwner((int) auth()['id']) : null; ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -15,8 +16,14 @@
             <h4>Company</h4>
             <a href="<?= url('/dashboard') ?>" class="<?= ($active ?? '')==='home' ? 'is-active':'' ?>">Overview</a>
             <a href="<?= url('/dashboard/profile') ?>" class="<?= ($active ?? '')==='profile' ? 'is-active':'' ?>">Profile</a>
+            <?php if (cap($navCompany, 'gallery')): ?>
+                <a href="<?= url('/dashboard/gallery') ?>" class="<?= ($active ?? '')==='gallery' ? 'is-active':'' ?>">Gallery</a>
+            <?php endif; ?>
             <a href="<?= url('/dashboard/leads') ?>" class="<?= ($active ?? '')==='leads' ? 'is-active':'' ?>">Leads</a>
             <a href="<?= url('/dashboard/reviews') ?>" class="<?= ($active ?? '')==='reviews' ? 'is-active':'' ?>">Reviews</a>
+            <?php if (cap($navCompany, 'analytics')): ?>
+                <a href="<?= url('/dashboard/analytics') ?>" class="<?= ($active ?? '')==='analytics' ? 'is-active':'' ?>">Analytics</a>
+            <?php endif; ?>
             <a href="<?= url('/dashboard/subscription') ?>" class="<?= ($active ?? '')==='subscription' ? 'is-active':'' ?>">Subscription</a>
             <h4>Account</h4>
             <a href="<?= url('/') ?>">View site</a>

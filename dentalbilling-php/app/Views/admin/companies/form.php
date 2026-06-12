@@ -37,6 +37,13 @@ $action = $isEdit ? url('/admin/companies/' . $company['id']) : url('/admin/comp
         <h2>Contact & location</h2>
         <div class="form" style="max-width:none">
             <label>Website</label><input type="text" name="website" value="<?= e($company['website'] ?? '') ?>">
+            <?php if ($nofollowSupported ?? false): ?>
+            <label>Website link SEO</label>
+            <select name="website_nofollow">
+                <option value="1" <?= (int)($company['website_nofollow'] ?? 1)===1?'selected':'' ?>>nofollow — don’t pass SEO value (default)</option>
+                <option value="0" <?= (int)($company['website_nofollow'] ?? 1)===0?'selected':'' ?>>dofollow — pass SEO value</option>
+            </select>
+            <?php endif; ?>
             <label>Phone</label><input type="text" name="phone" value="<?= e($company['phone'] ?? '') ?>">
             <label>Email</label><input type="email" name="email" value="<?= e($company['email'] ?? '') ?>">
             <label>Address</label><input type="text" name="address" value="<?= e($company['address'] ?? '') ?>">

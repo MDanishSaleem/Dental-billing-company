@@ -74,6 +74,15 @@ function compact_number($n): string
     return (string) $n;
 }
 
+/** Does a company's plan grant a capability? (entitlement gate for views) */
+function cap(?array $company, string $key): bool
+{
+    if (!$company) {
+        return false;
+    }
+    return App\Models\Capability::can($company['tier'] ?? 'FREE', $key);
+}
+
 /** Render a view fragment (no layout) and return its HTML. */
 function partial(string $view, array $data = []): string
 {

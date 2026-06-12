@@ -5,7 +5,7 @@ namespace App\Controllers;
 
 use App\Core\Controller;
 use App\Models\Plan;
-use App\Models\PlanFeature;
+use App\Models\Capability;
 
 final class PricingController extends Controller
 {
@@ -15,10 +15,11 @@ final class PricingController extends Controller
         $features = [];
         foreach ($plans as $p) {
             $id = (int) $p['id'];
-            // Prefer the managed plan_features list; fall back to the pipe-separated text.
-            $labels = PlanFeature::enabledLabels($id);
+            // Show the labels of the plan's enabled capabilities; fall back to
+            // the legacy pipe-separated text before the migration is applied.
+            $labels = Capability::labelsForPlan($id);
             if (!$labels) {
-                $labels = array_values(array_filter(array_map('trim', explode('|', (string) $p['features']))));
+                $labels = array_values(array_filter(array_map('trim', explode('|', (string) ($p['features'] ?? '')))));
             }
             $features[$id] = $labels;
         }
