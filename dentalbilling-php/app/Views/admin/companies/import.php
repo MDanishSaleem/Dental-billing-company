@@ -1,4 +1,4 @@
-<?php /** @var ?array $report @var array $categories */ ?>
+<?php /** @var ?array $report @var array $categories @var array $optionalFields @var array $requiredConfig */ ?>
 <div class="toolbar">
     <h1 style="margin:0">Import companies (CSV)</h1>
     <a href="<?= url('/admin/companies') ?>" class="btn btn--ghost btn--sm">← Back to companies</a>
@@ -27,6 +27,26 @@
                 <?= csrf_field() ?>
                 <input type="file" name="csv" accept=".csv,text/csv" required style="margin:.5rem 0">
                 <button class="btn btn--primary" type="submit" style="display:block;margin-top:.75rem">Import companies</button>
+            </form>
+        </div>
+
+        <div class="card">
+            <h2>Required fields</h2>
+            <p class="muted">Choose which columns must be filled in for a row to import. Rows missing a required field are skipped and reported. <code>name</code>, <code>state</code> and <code>city</code> are always required.</p>
+            <form method="post" action="<?= url('/admin/companies/import/fields') ?>">
+                <?= csrf_field() ?>
+                <div class="chips">
+                    <label class="chip" style="opacity:.6"><input type="checkbox" checked disabled> name</label>
+                    <label class="chip" style="opacity:.6"><input type="checkbox" checked disabled> state</label>
+                    <label class="chip" style="opacity:.6"><input type="checkbox" checked disabled> city</label>
+                    <?php foreach ($optionalFields as $key => $label): ?>
+                        <label class="chip" style="cursor:pointer">
+                            <input type="checkbox" name="required[]" value="<?= e($key) ?>" <?= in_array($key, $requiredConfig, true) ? 'checked' : '' ?>>
+                            <?= e($label) ?>
+                        </label>
+                    <?php endforeach; ?>
+                </div>
+                <button class="btn btn--ghost btn--sm" type="submit" style="margin-top:.75rem">Save required fields</button>
             </form>
         </div>
 

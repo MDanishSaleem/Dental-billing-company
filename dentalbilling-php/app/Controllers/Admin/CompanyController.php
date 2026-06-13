@@ -8,6 +8,7 @@ use App\Models\Company;
 use App\Models\ServiceCategory;
 use App\Models\State;
 use App\Models\City;
+use App\Models\Setting;
 
 final class CompanyController extends AdminController
 {
@@ -16,17 +17,45 @@ final class CompanyController extends AdminController
         'website', 'phone', 'email', 'address', 'founded_year', 'team_size', 'services',
     ];
 
+    // name/state/city are always required (structural). These can be toggled by the admin.
+    private const OPTIONAL_FIELDS = [
+        'tier' => 'Tier', 'status' => 'Status', 'short_description' => 'Short description',
+        'description' => 'Description', 'website' => 'Website', 'phone' => 'Phone',
+        'email' => 'Email', 'address' => 'Address', 'founded_year' => 'Founded year',
+        'team_size' => 'Team size', 'services' => 'Services',
+    ];
+
+    private function requiredConfig(): array
+    {
+        return array_values(array_filter(array_map('trim', explode(',', (string) setting('import_required_fields', '')))));
+    }
+
     /** Show the bulk-import page. */
     public function importForm(): void
     {
         $report = $_SESSION['_import_report'] ?? null;
         unset($_SESSION['_import_report']);
         $this->admin('admin/companies/import', [
-            'title'      => 'Import companies (CSV)',
-            'active'     => 'companies',
-            'report'     => $report,
-            'categories' => ServiceCategory::all(),
+            'title'          => 'Import companies (CSV)',
+            'active'         => 'companies',
+            'report'         => $report,
+            'categories'     => ServiceCategory::all(),
+            'optionalFields' => self::OPTIONAL_FIELDS,
+            'requiredConfig' => $this->requiredConfig(),
         ]);
+    }
+
+    /** Save which optional fields are required for import. */
+    public function saveRequiredFields(): void
+    {
+        $this->guard('/admin/companies/import');
+        $selected = array_values(array_intersect(
+            array_keys(self::OPTIONAL_FIELDS),
+            (array) ($_POST['required'] ?? [])
+        ));
+        Setting::set('import_required_fields', implode(',', $selected));
+        flash('success', 'Required fields updated.');
+        $this->redirect('/admin/companies/import');
     }
 
     /** Stream a sample CSV template. */
@@ -80,6 +109,7 @@ final class CompanyController extends AdminController
             $map[strtolower(trim((string) $h))] = $i;
         }
 
+        $required = $this->requiredConfig();
         $created = 0; $skipped = 0; $errors = [];
         $rowNum = 1;
         while (($row = fgetcsv($fh)) !== false) {
@@ -97,6 +127,15 @@ final class CompanyController extends AdminController
 
             $city = City::findOrCreate((int) $state['id'], $get('city'));
             if (!$city) { $skipped++; $errors[] = "Row $rowNum ($name): missing city."; continue; }
+
+            // Admin-configured required fields.
+            $missing = null;
+            foreach ($required as $field) {
+                if (isset(self::OPTIONAL_FIELDS[$field]) && $get($field) === '') { $missing = $field; break; }
+            }
+            if ($missing !== null) {
+                $skipped++; $errors[] = "Row $rowNum ($name): missing required field '$missing'."; continue;
+            }
 
             $slug = slugify($name);
             if (Company::findBySlug($slug)) {
