@@ -3,7 +3,7 @@
     <div class="container company-hero__inner">
         <div class="company-hero__logo">
             <?php if (!empty($company['logo'])): ?>
-                <img src="<?= url($company['logo']) ?>" alt="<?= e($company['name']) ?>" style="width:100%;height:100%;object-fit:cover;border-radius:18px">
+                <img src="<?= e(media_url($company['logo'])) ?>" alt="<?= e($company['name']) ?>" style="width:100%;height:100%;object-fit:cover;border-radius:18px">
             <?php else: ?><?= e(strtoupper(substr($company['name'], 0, 1))) ?><?php endif; ?>
         </div>
         <div class="company-hero__meta">

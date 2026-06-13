@@ -50,7 +50,7 @@
                     <div class="company-card__top">
                         <div class="company-card__logo">
                             <?php if (!empty($c['logo'])): ?>
-                                <img src="<?= url($c['logo']) ?>" alt="<?= e($c['name']) ?>" style="width:100%;height:100%;object-fit:cover;border-radius:11px">
+                                <img src="<?= e(media_url($c['logo'])) ?>" alt="<?= e($c['name']) ?>" style="width:100%;height:100%;object-fit:cover;border-radius:11px">
                             <?php else: ?><?= e(strtoupper(substr($c['name'], 0, 1))) ?><?php endif; ?>
                         </div>
                         <?php if (cap($c, 'featured_badge')): ?><span class="badge badge--gold">Featured</span><?php endif; ?>

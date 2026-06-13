@@ -9,20 +9,24 @@ use App\Models\ServiceCategory;
 use App\Models\State;
 use App\Models\City;
 use App\Models\Setting;
+use App\Models\Review;
 
 final class CompanyController extends AdminController
 {
     private const CSV_COLUMNS = [
         'name', 'state', 'city', 'tier', 'status', 'short_description', 'description',
-        'website', 'phone', 'email', 'address', 'founded_year', 'team_size', 'services',
+        'website', 'website_nofollow', 'phone', 'email', 'address', 'founded_year',
+        'team_size', 'logo', 'services', 'rating', 'review_count', 'reviews',
     ];
 
     // name/state/city are always required (structural). These can be toggled by the admin.
     private const OPTIONAL_FIELDS = [
         'tier' => 'Tier', 'status' => 'Status', 'short_description' => 'Short description',
-        'description' => 'Description', 'website' => 'Website', 'phone' => 'Phone',
-        'email' => 'Email', 'address' => 'Address', 'founded_year' => 'Founded year',
-        'team_size' => 'Team size', 'services' => 'Services',
+        'description' => 'Description', 'website' => 'Website', 'website_nofollow' => 'Website nofollow',
+        'phone' => 'Phone', 'email' => 'Email', 'address' => 'Address',
+        'founded_year' => 'Founded year', 'team_size' => 'Team size', 'logo' => 'Logo URL',
+        'services' => 'Services', 'rating' => 'Rating', 'review_count' => 'Review count',
+        'reviews' => 'Reviews',
     ];
 
     private function requiredConfig(): array
@@ -65,17 +69,24 @@ final class CompanyController extends AdminController
         header('Content-Disposition: attachment; filename="companies-sample.csv"');
         $out = fopen('php://output', 'w');
         fputcsv($out, self::CSV_COLUMNS);
+        // name,state,city,tier,status,short_description,description,website,website_nofollow,
+        // phone,email,address,founded_year,team_size,logo,services,rating,review_count,reviews
         fputcsv($out, [
             'Bright Smile Billing', 'California', 'Los Angeles', 'PREMIUM', 'ACTIVE',
             'Full-service dental RCM', 'We handle end-to-end dental billing for practices of all sizes.',
-            'https://example.com', '(213) 555-0100', 'hello@brightsmile.example', '123 Main St',
-            '2016', '10-25', 'claims-submission|payment-posting|insurance-verification',
+            'https://brightsmile.example', 'dofollow',
+            '(213) 555-0100', 'hello@brightsmile.example', '123 Main St', '2016', '10-25',
+            'https://brightsmile.example/logo.png',
+            'claims-submission|payment-posting|insurance-verification',
+            '', '', 'Dr. Lauren M.|5|Collections up 22%|Apex took over our billing and it transformed our cash flow. ;; Office Manager|5|Reliable|We barely think about billing now.',
         ]);
         fputcsv($out, [
             'Lone Star Dental Billing', 'TX', 'Dallas', 'FREE', 'ACTIVE',
             'Reliable Texas billing', 'Dependable claims and patient billing with a personal touch.',
-            'https://example.com', '(214) 555-0101', 'info@lonestar.example', '',
-            '2019', '1-10', 'claims-submission|patient-billing',
+            'https://lonestar.example', 'nofollow',
+            '(214) 555-0101', 'info@lonestar.example', '', '2019', '1-10', '',
+            'claims-submission|patient-billing',
+            '4.5', '54', '',
         ]);
         fclose($out);
         exit;
@@ -176,6 +187,39 @@ final class CompanyController extends AdminController
             if ($serviceIds) {
                 Company::syncServices($id, $serviceIds);
             }
+
+            // Logo (URL or path)
+            if ($get('logo') !== '') {
+                Company::updateLogo($id, $get('logo'));
+            }
+            // Website nofollow / dofollow
+            if ($get('website_nofollow') !== '') {
+                $nf = strtolower($get('website_nofollow'));
+                Company::setWebsiteNofollow($id, in_array($nf, ['0', 'dofollow', 'no', 'false'], true) ? 0 : 1);
+            }
+            // Individual reviews (author|rating|title|body, separated by ;;) take priority;
+            // otherwise an explicit rating/review_count.
+            $reviewsRaw = $get('reviews');
+            if ($reviewsRaw !== '') {
+                foreach (explode(';;', $reviewsRaw) as $rv) {
+                    $parts = array_map('trim', explode('|', $rv));
+                    $author = $parts[0] ?? '';
+                    $rRating = (int) ($parts[1] ?? 0);
+                    if ($author === '' || $rRating < 1 || $rRating > 5) { continue; }
+                    Review::create([
+                        'company_id'  => $id,
+                        'author_name' => $author,
+                        'rating'      => $rRating,
+                        'title'       => $parts[2] ?? null,
+                        'body'        => $parts[3] ?? null,
+                        'status'      => 'APPROVED',
+                    ]);
+                }
+                Company::recalcRating($id);
+            } elseif ($get('rating') !== '' || $get('review_count') !== '') {
+                Company::setRatingCount($id, (float) $get('rating'), (int) $get('review_count'));
+            }
+
             $created++;
         }
         fclose($fh);

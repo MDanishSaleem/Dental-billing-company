@@ -14,7 +14,7 @@
         <div style="display:flex;align-items:center;gap:1.25rem;flex-wrap:wrap">
             <div class="company-card__logo" style="width:64px;height:64px;font-size:1.5rem;overflow:hidden">
                 <?php if (!empty($company['logo'])): ?>
-                    <img src="<?= url($company['logo']) ?>" alt="logo" style="width:100%;height:100%;object-fit:cover">
+                    <img src="<?= e(media_url($company['logo'])) ?>" alt="logo" style="width:100%;height:100%;object-fit:cover">
                 <?php else: ?><?= e(strtoupper(substr($company['name'], 0, 1))) ?><?php endif; ?>
             </div>
             <div class="form" style="max-width:none;flex:1;min-width:220px">

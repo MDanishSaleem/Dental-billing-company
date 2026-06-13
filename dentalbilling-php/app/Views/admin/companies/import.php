@@ -64,8 +64,13 @@
                     <tr><td><code>short_description</code></td><td>Optional tagline.</td></tr>
                     <tr><td><code>description</code></td><td>Optional.</td></tr>
                     <tr><td><code>website, phone, email, address</code></td><td>Optional.</td></tr>
+                    <tr><td><code>website_nofollow</code></td><td><code>nofollow</code> (default) or <code>dofollow</code>.</td></tr>
                     <tr><td><code>founded_year, team_size</code></td><td>Optional.</td></tr>
+                    <tr><td><code>logo</code></td><td>Image URL (e.g. <code>https://site.com/logo.png</code>).</td></tr>
                     <tr><td><code>services</code></td><td>Category slugs separated by <code>|</code> (e.g. <code>claims-submission|payment-posting</code>).</td></tr>
+                    <tr><td><code>rating</code></td><td>Star rating 0–5 (e.g. <code>4.5</code>). Used when no <code>reviews</code> are given.</td></tr>
+                    <tr><td><code>review_count</code></td><td>Number of reviews to display (e.g. <code>54</code>).</td></tr>
+                    <tr><td><code>reviews</code></td><td>Full reviews. Format <code>author|rating|title|body</code>, multiple separated by <code>;;</code>. When present, the company’s rating &amp; count are computed from these.</td></tr>
                 </tbody>
             </table>
         </div>

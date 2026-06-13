@@ -220,6 +220,15 @@ final class Company
         }
     }
 
+    public static function setRatingCount(int $id, float $rating, int $count): void
+    {
+        $rating = max(0.0, min(5.0, $rating));
+        Database::execute(
+            "UPDATE companies SET rating=?, review_count=? WHERE id=?",
+            [round($rating, 1), max(0, $count), $id]
+        );
+    }
+
     public static function recalcRating(int $companyId): void
     {
         $row = Database::first(

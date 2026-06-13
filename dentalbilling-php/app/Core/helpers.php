@@ -22,6 +22,19 @@ function asset(string $path): string
     return url('assets/' . ltrim($path, '/'));
 }
 
+/** Resolve a media path: pass absolute http(s) URLs through, otherwise make site-relative. */
+function media_url(?string $path): string
+{
+    $path = (string) $path;
+    if ($path === '') {
+        return '';
+    }
+    if (preg_match('#^https?://#i', $path)) {
+        return $path;
+    }
+    return url($path);
+}
+
 /** Site setting helper (reads the settings table, cached per request). */
 function setting(string $key, $default = null)
 {
