@@ -57,6 +57,7 @@ $router->get('/admin/companies/import/sample', 'Admin\\CompanyController@sampleC
 $router->get('/admin/companies/import', 'Admin\\CompanyController@importForm');
 $router->post('/admin/companies/import', 'Admin\\CompanyController@import');
 $router->post('/admin/companies/import/fields', 'Admin\\CompanyController@saveRequiredFields');
+$router->post('/admin/companies/bulk', 'Admin\\CompanyController@bulk');
 $router->get('/admin/companies/{id}', 'Admin\\CompanyController@edit');
 $router->post('/admin/companies/{id}', 'Admin\\CompanyController@update');
 $router->post('/admin/companies/{id}/delete', 'Admin\\CompanyController@delete');

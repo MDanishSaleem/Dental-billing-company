@@ -264,6 +264,39 @@ final class CompanyController extends AdminController
         $this->redirect('/admin/companies');
     }
 
+    /** Apply a bulk action to selected companies. */
+    public function bulk(): void
+    {
+        $this->guard('/admin/companies');
+        $ids = (array) ($_POST['ids'] ?? []);
+        $action = (string) $this->input('bulk_action');
+
+        if (!$ids) {
+            flash('error', 'No companies selected.');
+            $this->redirect('/admin/companies');
+        }
+
+        if ($action === 'delete') {
+            $n = Company::deleteMany($ids);
+            flash('success', "Deleted {$n} compan" . ($n === 1 ? 'y' : 'ies') . '.');
+        } elseif (strpos($action, 'status:') === 0) {
+            $status = substr($action, 7);
+            if (in_array($status, ['PENDING', 'ACTIVE', 'SUSPENDED', 'REJECTED'], true)) {
+                $n = Company::setStatusMany($ids, $status);
+                flash('success', "Set {$n} compan" . ($n === 1 ? 'y' : 'ies') . " to {$status}.");
+            }
+        } elseif (strpos($action, 'tier:') === 0) {
+            $tier = substr($action, 5);
+            if (in_array($tier, ['FREE', 'BASIC', 'PREMIUM', 'FEATURED'], true)) {
+                $n = Company::setTierMany($ids, $tier);
+                flash('success', "Moved {$n} compan" . ($n === 1 ? 'y' : 'ies') . " to the {$tier} plan.");
+            }
+        } else {
+            flash('error', 'Please choose a bulk action.');
+        }
+        $this->redirect('/admin/companies');
+    }
+
     public function approve(array $args): void
     {
         $this->guard('/admin/companies');

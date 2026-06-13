@@ -174,6 +174,36 @@ final class Company
         Database::execute("UPDATE companies SET status=? WHERE id=?", [$status, $id]);
     }
 
+    /** @param int[] $ids */
+    private static function intIds(array $ids): array
+    {
+        return array_values(array_filter(array_map('intval', $ids)));
+    }
+
+    public static function deleteMany(array $ids): int
+    {
+        $ids = self::intIds($ids);
+        if (!$ids) { return 0; }
+        $in = implode(',', array_fill(0, count($ids), '?'));
+        return Database::execute("DELETE FROM companies WHERE id IN ($in)", $ids);
+    }
+
+    public static function setStatusMany(array $ids, string $status): int
+    {
+        $ids = self::intIds($ids);
+        if (!$ids) { return 0; }
+        $in = implode(',', array_fill(0, count($ids), '?'));
+        return Database::execute("UPDATE companies SET status=? WHERE id IN ($in)", array_merge([$status], $ids));
+    }
+
+    public static function setTierMany(array $ids, string $tier): int
+    {
+        $ids = self::intIds($ids);
+        if (!$ids) { return 0; }
+        $in = implode(',', array_fill(0, count($ids), '?'));
+        return Database::execute("UPDATE companies SET tier=? WHERE id IN ($in)", array_merge([$tier], $ids));
+    }
+
     public static function setTier(int $id, string $tier): void
     {
         Database::execute("UPDATE companies SET tier=? WHERE id=?", [$tier, $id]);
