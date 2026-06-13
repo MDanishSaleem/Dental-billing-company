@@ -1,7 +1,10 @@
 <?php /** @var array $companies */ ?>
 <div class="toolbar">
     <h1 style="margin:0">Companies</h1>
-    <a href="<?= url('/admin/companies/new') ?>" class="btn btn--primary btn--sm">+ New company</a>
+    <div style="display:flex;gap:.5rem">
+        <a href="<?= url('/admin/companies/import') ?>" class="btn btn--ghost btn--sm">⬆ Import CSV</a>
+        <a href="<?= url('/admin/companies/new') ?>" class="btn btn--primary btn--sm">+ New company</a>
+    </div>
 </div>
 <table class="table">
     <thead><tr><th>Name</th><th>Location</th><th>Tier</th><th>Status</th><th>Rating</th><th>Actions</th></tr></thead>

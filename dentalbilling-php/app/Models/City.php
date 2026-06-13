@@ -38,4 +38,25 @@ final class City
     {
         Database::execute("UPDATE cities SET active=? WHERE id=?", [$active, $id]);
     }
+
+    /** Find a city by name within a state, creating it if it doesn't exist. */
+    public static function findOrCreate(int $stateId, string $name): ?array
+    {
+        $name = trim($name);
+        if ($name === '') {
+            return null;
+        }
+        $slug = slugify($name);
+        $existing = Database::first(
+            "SELECT * FROM cities WHERE state_id=? AND slug=? LIMIT 1", [$stateId, $slug]
+        );
+        if ($existing) {
+            return $existing;
+        }
+        $id = Database::insert(
+            "INSERT INTO cities (state_id,name,slug,active) VALUES (?,?,?,1)", [$stateId, $name, $slug]
+        );
+        return Database::first("SELECT * FROM cities WHERE id=?", [$id]);
+    }
 }
+

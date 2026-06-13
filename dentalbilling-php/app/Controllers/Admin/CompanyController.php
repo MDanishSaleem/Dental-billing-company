@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Controllers\Admin;
 
+use App\Core\Database;
 use App\Models\Company;
 use App\Models\ServiceCategory;
 use App\Models\State;
@@ -10,6 +11,145 @@ use App\Models\City;
 
 final class CompanyController extends AdminController
 {
+    private const CSV_COLUMNS = [
+        'name', 'state', 'city', 'tier', 'status', 'short_description', 'description',
+        'website', 'phone', 'email', 'address', 'founded_year', 'team_size', 'services',
+    ];
+
+    /** Show the bulk-import page. */
+    public function importForm(): void
+    {
+        $report = $_SESSION['_import_report'] ?? null;
+        unset($_SESSION['_import_report']);
+        $this->admin('admin/companies/import', [
+            'title'      => 'Import companies (CSV)',
+            'active'     => 'companies',
+            'report'     => $report,
+            'categories' => ServiceCategory::all(),
+        ]);
+    }
+
+    /** Stream a sample CSV template. */
+    public function sampleCsv(): void
+    {
+        header('Content-Type: text/csv; charset=utf-8');
+        header('Content-Disposition: attachment; filename="companies-sample.csv"');
+        $out = fopen('php://output', 'w');
+        fputcsv($out, self::CSV_COLUMNS);
+        fputcsv($out, [
+            'Bright Smile Billing', 'California', 'Los Angeles', 'PREMIUM', 'ACTIVE',
+            'Full-service dental RCM', 'We handle end-to-end dental billing for practices of all sizes.',
+            'https://example.com', '(213) 555-0100', 'hello@brightsmile.example', '123 Main St',
+            '2016', '10-25', 'claims-submission|payment-posting|insurance-verification',
+        ]);
+        fputcsv($out, [
+            'Lone Star Dental Billing', 'TX', 'Dallas', 'FREE', 'ACTIVE',
+            'Reliable Texas billing', 'Dependable claims and patient billing with a personal touch.',
+            'https://example.com', '(214) 555-0101', 'info@lonestar.example', '',
+            '2019', '1-10', 'claims-submission|patient-billing',
+        ]);
+        fclose($out);
+        exit;
+    }
+
+    /** Process an uploaded CSV. */
+    public function import(): void
+    {
+        $this->guard('/admin/companies/import');
+
+        if (empty($_FILES['csv']) || ($_FILES['csv']['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
+            flash('error', 'Please choose a CSV file to upload.');
+            $this->redirect('/admin/companies/import');
+        }
+        $fh = @fopen($_FILES['csv']['tmp_name'], 'r');
+        if (!$fh) {
+            flash('error', 'Could not read the uploaded file.');
+            $this->redirect('/admin/companies/import');
+        }
+
+        $header = fgetcsv($fh);
+        if (!$header) {
+            fclose($fh);
+            flash('error', 'The CSV appears to be empty.');
+            $this->redirect('/admin/companies/import');
+        }
+        // Strip a UTF-8 BOM from the first header cell and index columns by name.
+        $header[0] = preg_replace('/^\xEF\xBB\xBF/', '', (string) $header[0]);
+        $map = [];
+        foreach ($header as $i => $h) {
+            $map[strtolower(trim((string) $h))] = $i;
+        }
+
+        $created = 0; $skipped = 0; $errors = [];
+        $rowNum = 1;
+        while (($row = fgetcsv($fh)) !== false) {
+            $rowNum++;
+            if (count(array_filter($row, static fn($v) => trim((string) $v) !== '')) === 0) {
+                continue; // blank line
+            }
+            $get = static fn(string $k) => isset($map[$k]) ? trim((string) ($row[$map[$k]] ?? '')) : '';
+
+            $name = $get('name');
+            if ($name === '') { $skipped++; $errors[] = "Row $rowNum: missing name."; continue; }
+
+            $state = State::findByNameOrAbbr($get('state'));
+            if (!$state) { $skipped++; $errors[] = "Row $rowNum ($name): unknown state '" . $get('state') . "'."; continue; }
+
+            $city = City::findOrCreate((int) $state['id'], $get('city'));
+            if (!$city) { $skipped++; $errors[] = "Row $rowNum ($name): missing city."; continue; }
+
+            $slug = slugify($name);
+            if (Company::findBySlug($slug)) {
+                $slug .= '-' . substr(bin2hex(random_bytes(3)), 0, 5);
+            }
+            $tier = strtoupper($get('tier'));
+            if (!in_array($tier, ['FREE', 'BASIC', 'PREMIUM', 'FEATURED'], true)) { $tier = 'FREE'; }
+            $status = strtoupper($get('status'));
+            if (!in_array($status, ['PENDING', 'ACTIVE', 'SUSPENDED', 'REJECTED'], true)) { $status = 'ACTIVE'; }
+
+            $id = Company::create([
+                'name'              => $name,
+                'slug'              => $slug,
+                'status'            => $status,
+                'tier'              => $tier,
+                'short_description' => $get('short_description'),
+                'description'       => $get('description'),
+                'website'           => $get('website'),
+                'phone'             => $get('phone'),
+                'email'             => $get('email'),
+                'address'           => $get('address'),
+                'founded_year'      => (int) $get('founded_year'),
+                'team_size'         => $get('team_size'),
+                'city_id'           => (int) $city['id'],
+                'state_id'          => (int) $state['id'],
+            ]);
+
+            // Services: pipe-separated category slugs or names.
+            $serviceIds = [];
+            foreach (preg_split('/[|,]/', $get('services')) as $svc) {
+                $svc = trim((string) $svc);
+                if ($svc === '') { continue; }
+                $cat = Database::first(
+                    "SELECT id FROM service_categories WHERE slug=? OR name=? LIMIT 1", [slugify($svc), $svc]
+                );
+                if ($cat) { $serviceIds[] = (int) $cat['id']; }
+            }
+            if ($serviceIds) {
+                Company::syncServices($id, $serviceIds);
+            }
+            $created++;
+        }
+        fclose($fh);
+
+        $_SESSION['_import_report'] = [
+            'created' => $created,
+            'skipped' => $skipped,
+            'errors'  => array_slice($errors, 0, 50),
+        ];
+        flash('success', "Import complete: {$created} created, {$skipped} skipped.");
+        $this->redirect('/admin/companies/import');
+    }
+
     public function index(): void
     {
         $this->admin('admin/companies/index', [

@@ -52,6 +52,10 @@ $router->get('/admin', 'Admin\\DashboardController@index');
 $router->get('/admin/companies', 'Admin\\CompanyController@index');
 $router->get('/admin/companies/new', 'Admin\\CompanyController@create');
 $router->post('/admin/companies', 'Admin\\CompanyController@store');
+// CSV import — must come before the /{id} routes
+$router->get('/admin/companies/import/sample', 'Admin\\CompanyController@sampleCsv');
+$router->get('/admin/companies/import', 'Admin\\CompanyController@importForm');
+$router->post('/admin/companies/import', 'Admin\\CompanyController@import');
 $router->get('/admin/companies/{id}', 'Admin\\CompanyController@edit');
 $router->post('/admin/companies/{id}', 'Admin\\CompanyController@update');
 $router->post('/admin/companies/{id}/delete', 'Admin\\CompanyController@delete');
