@@ -82,6 +82,18 @@ final class Company
         );
     }
 
+    public static function byCategory(string $categorySlug): array
+    {
+        return Database::all(
+            "SELECT " . self::SELECT . " " . self::JOINS . "
+             JOIN company_services cs ON cs.company_id = c.id
+             JOIN service_categories sc ON sc.id = cs.category_id AND sc.slug = ?
+             WHERE c.status='ACTIVE'
+             GROUP BY c.id
+             ORDER BY (c.tier='FEATURED') DESC, c.rating DESC", [$categorySlug]
+        );
+    }
+
     /** Faceted search. Filters: q, location, category(slug), state(slug). */
     public static function search(array $f): array
     {

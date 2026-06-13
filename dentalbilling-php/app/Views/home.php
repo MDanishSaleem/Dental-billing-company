@@ -28,7 +28,7 @@
         </div>
         <div class="grid grid--cats">
             <?php foreach ($categories as $cat): ?>
-                <a href="<?= url('/search?category=' . urlencode($cat['slug'])) ?>" class="cat-card">
+                <a href="<?= url('/companies/' . e($cat['slug'])) ?>" class="cat-card">
                     <span class="cat-card__icon"><?= e($cat['icon'] ?: '🦷') ?></span>
                     <span class="cat-card__name"><?= e($cat['name']) ?></span>
                     <span class="cat-card__count"><?= e($cat['company_count']) ?> companies</span>
@@ -79,7 +79,7 @@
         </div>
         <div class="grid grid--states">
             <?php foreach ($states as $s): ?>
-                <a href="<?= url('/directory/' . e($s['slug'])) ?>" class="state-pill">
+                <a href="<?= url('/companies/' . e($s['slug'])) ?>" class="state-pill">
                     <span><?= e($s['name']) ?></span>
                     <span class="state-pill__count"><?= e($s['company_count']) ?></span>
                 </a>

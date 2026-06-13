@@ -14,7 +14,7 @@
             </div>
             <h1><?= e($company['name']) ?></h1>
             <p class="company-hero__loc">
-                <a href="<?= url('/companies/' . e($company['city_slug']) . '/' . e($company['state_slug'])) ?>">
+                <a href="<?= url('/companies/' . e($company['state_slug']) . '/' . e($company['city_slug'])) ?>">
                     <?= e($company['city_name']) ?>, <?= e($company['state_name']) ?>
                 </a>
             </p>

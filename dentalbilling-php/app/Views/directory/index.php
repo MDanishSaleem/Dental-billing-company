@@ -9,7 +9,7 @@
     <div class="container">
         <div class="grid grid--states">
             <?php foreach ($states as $s): ?>
-                <a href="<?= url('/directory/' . e($s['slug'])) ?>" class="state-pill">
+                <a href="<?= url('/companies/' . e($s['slug'])) ?>" class="state-pill">
                     <span><?= e($s['name']) ?></span>
                     <span class="state-pill__count"><?= e($s['company_count']) ?></span>
                 </a>

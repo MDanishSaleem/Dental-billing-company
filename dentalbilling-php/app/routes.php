@@ -13,11 +13,12 @@
 $router->get('/', 'HomeController@index');
 $router->get('/search', 'SearchController@index');
 $router->get('/directory', 'DirectoryController@index');
-$router->get('/directory/{state}', 'DirectoryController@state');
-$router->get('/companies/{city}/{state}', 'DirectoryController@city');
-$router->get('/companies/{slug}', 'CompanyController@show');
+$router->get('/directory/{state}', 'DirectoryController@state'); // alias
 $router->post('/companies/{slug}/lead', 'CompanyController@lead');
 $router->post('/companies/{slug}/review', 'CompanyController@review');
+$router->get('/companies/{state}/{city}', 'DirectoryController@city');
+// One segment after /companies resolves to a state, a service, or a company:
+$router->get('/companies/{slug}', 'DirectoryController@resolve');
 $router->get('/compare', 'CompareController@index');
 $router->get('/pricing', 'PricingController@index');
 $router->get('/blog', 'BlogController@index');

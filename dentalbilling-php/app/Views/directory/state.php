@@ -13,7 +13,7 @@
             <h2 class="section__subtitle">Cities</h2>
             <div class="grid grid--states" style="margin-bottom:2.5rem">
                 <?php foreach ($cities as $city): ?>
-                    <a href="<?= url('/companies/' . e($city['slug']) . '/' . e($state['slug'])) ?>" class="state-pill">
+                    <a href="<?= url('/companies/' . e($state['slug']) . '/' . e($city['slug'])) ?>" class="state-pill">
                         <span><?= e($city['name']) ?></span>
                         <span class="state-pill__count"><?= e($city['company_count']) ?></span>
                     </a>

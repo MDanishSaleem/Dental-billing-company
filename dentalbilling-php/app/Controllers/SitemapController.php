@@ -14,7 +14,15 @@ final class SitemapController extends Controller
         $urls = ['/', '/search', '/directory', '/pricing', '/blog', '/compare'];
 
         foreach (Database::all("SELECT slug FROM states WHERE active=1") as $r) {
-            $urls[] = '/directory/' . $r['slug'];
+            $urls[] = '/companies/' . $r['slug'];
+        }
+        foreach (Database::all("SELECT slug FROM service_categories") as $r) {
+            $urls[] = '/companies/' . $r['slug'];
+        }
+        foreach (Database::all(
+            "SELECT ci.slug AS city, s.slug AS state FROM cities ci
+             JOIN states s ON s.id = ci.state_id WHERE ci.active=1 AND s.active=1") as $r) {
+            $urls[] = '/companies/' . $r['state'] . '/' . $r['city'];
         }
         foreach (Database::all("SELECT slug FROM companies WHERE status='ACTIVE'") as $r) {
             $urls[] = '/companies/' . $r['slug'];
